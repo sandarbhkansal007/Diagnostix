@@ -27,6 +27,20 @@ Authenticated application endpoints use `get_current_user()`. The payment webhoo
 
 ## Setup
 
+### 1. Docker Setup (Recommended)
+
+```powershell
+$env:JWT_SECRET_KEY = "<your-long-random-secret>"
+docker compose up --build
+docker compose exec app alembic upgrade head
+```
+
+API: `http://localhost:8000`  
+Swagger: `http://localhost:8000/docs`  
+ReDoc: `http://localhost:8000/redoc`
+
+### 2. Local Development Setup
+
 Requirements: Python 3.12 and PostgreSQL 16 or a compatible PostgreSQL installation.
 
 ```powershell
@@ -38,31 +52,12 @@ Copy-Item .env.example .env
 
 Set a real, long random value for `JWT_SECRET_KEY` in `.env`. Do not commit `.env`.
 
-Run the migration and start the API:
-
 ```powershell
 python -m alembic upgrade head
 python -m uvicorn app.main:app --reload
 ```
 
-The API is available at `http://localhost:8000`. Swagger UI is at `/docs` and ReDoc is at `/redoc`.
-
-## Docker
-
-Docker Compose starts PostgreSQL and the API:
-
-```powershell
-$env:JWT_SECRET_KEY = "replace-this-with-a-long-random-secret"
-docker compose up --build
-```
-
-The app container expects the database to be healthy. Apply migrations from the project directory after the database is available, or from the app container:
-
-```powershell
-docker compose exec app alembic upgrade head
-```
-
-The app service sets `PYTHONPATH=/app` so the Alembic console command can import the application package. The compose configuration requires `JWT_SECRET_KEY`; no application secret is stored in the repository.
+Locally, the API is available at `http://localhost:8000`, Swagger UI at `http://localhost:8000/docs`, and ReDoc at `http://localhost:8000/redoc`.
 
 ## Environment Variables
 
