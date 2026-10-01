@@ -93,6 +93,7 @@ def create_booking(client: TestClient, headers: dict[str, str], centre_test_id: 
     return response.json()
 
 
+# Covers authenticated booking creation and the initial PENDING status.
 def test_authenticated_booking_creation_and_pending_status(client: TestClient) -> None:
     headers = auth_headers(client, "booking-owner@example.com")
     centre_test_id = create_centre_test(client, headers)
@@ -103,6 +104,7 @@ def test_authenticated_booking_creation_and_pending_status(client: TestClient) -
     assert booking["status"] == BookingStatus.PENDING.value
 
 
+# Covers rejecting booking creation without authentication.
 def test_unauthenticated_booking_creation_returns_401(client: TestClient) -> None:
     response = client.post(
         "/api/v1/bookings",
@@ -112,6 +114,7 @@ def test_unauthenticated_booking_creation_returns_401(client: TestClient) -> Non
     assert response.status_code == 401
 
 
+# Covers rejecting a booking for an unknown centre-test association.
 def test_nonexistent_centre_test_returns_404(client: TestClient) -> None:
     headers = auth_headers(client, "missing-association@example.com")
 
@@ -124,6 +127,7 @@ def test_nonexistent_centre_test_returns_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+# Covers copying the current centre-test price into the booking.
 def test_booking_amount_is_snapshotted_from_centre_test_price(client: TestClient) -> None:
     headers = auth_headers(client, "price-owner@example.com")
     centre_test_id = create_centre_test(client, headers, price="25.50")
@@ -133,6 +137,7 @@ def test_booking_amount_is_snapshotted_from_centre_test_price(client: TestClient
     assert Decimal(str(booking["amount"])) == Decimal("25.50")
 
 
+# Covers rejecting client-supplied booking amounts.
 def test_client_cannot_control_booking_amount(client: TestClient) -> None:
     headers = auth_headers(client, "amount-owner@example.com")
     centre_test_id = create_centre_test(client, headers, price="25.50")
@@ -150,6 +155,7 @@ def test_client_cannot_control_booking_amount(client: TestClient) -> None:
     assert response.status_code == 422
 
 
+# Covers listing bookings with user ownership isolation.
 def test_user_can_list_only_their_own_bookings(client: TestClient) -> None:
     owner_headers = auth_headers(client, "list-owner@example.com")
     other_headers = auth_headers(client, "list-other@example.com")
@@ -165,6 +171,7 @@ def test_user_can_list_only_their_own_bookings(client: TestClient) -> None:
     assert other_response.json() == []
 
 
+# Covers retrieving owned bookings while hiding another user's booking.
 def test_user_can_retrieve_own_booking_but_not_another_users(client: TestClient) -> None:
     owner_headers = auth_headers(client, "retrieve-owner@example.com")
     other_headers = auth_headers(client, "retrieve-other@example.com")
@@ -179,6 +186,7 @@ def test_user_can_retrieve_own_booking_but_not_another_users(client: TestClient)
     assert other_response.status_code == 404
 
 
+# Covers the allowed PENDING-to-CANCELLED transition.
 def test_pending_booking_can_be_cancelled(client: TestClient) -> None:
     headers = auth_headers(client, "cancel-owner@example.com")
     centre_test_id = create_centre_test(client, headers)
@@ -190,6 +198,7 @@ def test_pending_booking_can_be_cancelled(client: TestClient) -> None:
     assert response.json()["status"] == BookingStatus.CANCELLED.value
 
 
+# Covers rejecting cancellation from the FAILED state.
 def test_invalid_cancellation_transition_returns_409(test_db, client: TestClient) -> None:
     headers = auth_headers(client, "transition-owner@example.com")
     centre_test_id = create_centre_test(client, headers)
@@ -205,6 +214,7 @@ def test_invalid_cancellation_transition_returns_409(test_db, client: TestClient
     assert response.status_code == 409
 
 
+# Covers preventing one user from cancelling another user's booking.
 def test_user_cannot_cancel_another_users_booking(client: TestClient) -> None:
     owner_headers = auth_headers(client, "cancel-other-owner@example.com")
     other_headers = auth_headers(client, "cancel-other-user@example.com")
@@ -216,6 +226,7 @@ def test_user_cannot_cancel_another_users_booking(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+# Covers 404 responses for missing bookings on read and cancel requests.
 def test_invalid_booking_id_returns_404(client: TestClient) -> None:
     headers = auth_headers(client, "invalid-booking@example.com")
 
@@ -226,6 +237,7 @@ def test_invalid_booking_id_returns_404(client: TestClient) -> None:
     assert cancel_response.status_code == 404
 
 
+# Covers rejecting past and timezone-naive appointment datetimes.
 def test_invalid_or_past_appointment_datetime_returns_422(client: TestClient) -> None:
     headers = auth_headers(client, "invalid-date@example.com")
     centre_test_id = create_centre_test(client, headers)
@@ -251,6 +263,7 @@ def test_invalid_or_past_appointment_datetime_returns_422(client: TestClient) ->
     assert naive_response.status_code == 422
 
 
+# Covers preserving the booking price snapshot after catalogue price changes.
 def test_booking_amount_snapshot_does_not_change_when_price_changes(test_db, client: TestClient) -> None:
     headers = auth_headers(client, "snapshot-owner@example.com")
     centre_test_id = create_centre_test(client, headers, price="25.50")

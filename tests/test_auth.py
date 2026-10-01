@@ -48,6 +48,7 @@ def signup_payload(email: str = "user@example.com") -> dict[str, str]:
     return {"email": email, "password": "correct-horse-battery-staple"}
 
 
+# Covers successful signup, token issuance, and safe user response fields.
 def test_successful_signup_returns_user_and_token(client: TestClient) -> None:
     response = client.post("/api/v1/auth/signup", json=signup_payload())
 
@@ -59,6 +60,7 @@ def test_successful_signup_returns_user_and_token(client: TestClient) -> None:
     assert "password_hash" not in payload
 
 
+# Covers rejecting signup with an email that is already registered.
 def test_duplicate_signup_returns_conflict(client: TestClient) -> None:
     client.post("/api/v1/auth/signup", json=signup_payload())
 
@@ -67,6 +69,7 @@ def test_duplicate_signup_returns_conflict(client: TestClient) -> None:
     assert response.status_code == 409
 
 
+# Covers storing a verifiable password hash instead of plaintext.
 def test_password_is_stored_hashed(test_db, client: TestClient) -> None:
     client.post("/api/v1/auth/signup", json=signup_payload())
 
@@ -76,6 +79,7 @@ def test_password_is_stored_hashed(test_db, client: TestClient) -> None:
         assert verify_password("correct-horse-battery-staple", user.password_hash)
 
 
+# Covers password hash creation and correct/incorrect password verification.
 def test_password_hashing_utility_round_trip() -> None:
     password = "correct-horse-battery-staple"
     password_hash = hash_password(password)
@@ -85,6 +89,7 @@ def test_password_hashing_utility_round_trip() -> None:
     assert not verify_password("wrong-password", password_hash)
 
 
+# Covers successful login and access-token issuance.
 def test_successful_login_returns_token(client: TestClient) -> None:
     client.post("/api/v1/auth/signup", json=signup_payload())
 
@@ -95,6 +100,7 @@ def test_successful_login_returns_token(client: TestClient) -> None:
     assert response.json()["access_token"]
 
 
+# Covers uniform unauthorized responses for wrong passwords and unknown users.
 def test_invalid_password_and_nonexistent_user_are_unauthorized(client: TestClient) -> None:
     client.post("/api/v1/auth/signup", json=signup_payload())
 
@@ -112,6 +118,7 @@ def test_invalid_password_and_nonexistent_user_are_unauthorized(client: TestClie
     assert invalid_password.json() == nonexistent_user.json()
 
 
+# Covers validating a JWT and loading its authenticated user.
 def test_valid_jwt_returns_correct_authenticated_user(client: TestClient) -> None:
     signup_response = client.post("/api/v1/auth/signup", json=signup_payload())
     token = signup_response.json()["access_token"]
@@ -122,6 +129,7 @@ def test_valid_jwt_returns_correct_authenticated_user(client: TestClient) -> Non
     assert response.json()["email"] == "user@example.com"
 
 
+# Covers rejecting invalid and expired access tokens.
 def test_invalid_and_expired_jwt_are_unauthorized(client: TestClient) -> None:
     invalid_response = client.get(
         "/api/v1/auth/me",
@@ -137,6 +145,7 @@ def test_invalid_and_expired_jwt_are_unauthorized(client: TestClient) -> None:
     assert expired_response.status_code == 401
 
 
+# Covers rejecting missing or malformed Bearer authorization headers.
 def test_missing_and_malformed_authorization_headers_are_unauthorized(client: TestClient) -> None:
     missing_response = client.get("/api/v1/auth/me")
     malformed_response = client.get(
@@ -148,6 +157,7 @@ def test_missing_and_malformed_authorization_headers_are_unauthorized(client: Te
     assert malformed_response.status_code == 401
 
 
+# Covers validation errors for malformed email and short password input.
 def test_invalid_signup_payload_returns_unprocessable_entity(client: TestClient) -> None:
     response = client.post(
         "/api/v1/auth/signup",

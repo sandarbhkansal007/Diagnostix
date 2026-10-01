@@ -5,6 +5,7 @@ from app.main import app
 client = TestClient(app)
 
 
+# Covers the health endpoint's successful status and response payload.
 def test_health_endpoint() -> None:
     response = client.get("/health")
     assert response.status_code == 200

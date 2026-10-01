@@ -71,6 +71,7 @@ def create_test(client: TestClient, headers: dict[str, str], name: str = "Blood 
     return response.json()
 
 
+# Covers authenticated diagnostic-centre creation.
 def test_authenticated_centre_creation(client: TestClient) -> None:
     headers = auth_headers(client)
 
@@ -85,6 +86,7 @@ def test_authenticated_centre_creation(client: TestClient) -> None:
     assert response.json()["location"] == "Downtown"
 
 
+# Covers requiring authentication to create a centre.
 def test_unauthenticated_centre_creation_returns_401(client: TestClient) -> None:
     response = client.post(
         "/api/v1/centres",
@@ -94,6 +96,7 @@ def test_unauthenticated_centre_creation_returns_401(client: TestClient) -> None
     assert response.status_code == 401
 
 
+# Covers retrieving one centre and listing centres.
 def test_get_and_list_centres(client: TestClient) -> None:
     headers = auth_headers(client)
     centre = create_centre(client, headers)
@@ -107,6 +110,7 @@ def test_get_and_list_centres(client: TestClient) -> None:
     assert len(list_response.json()) == 1
 
 
+# Covers returning 404 for an unknown centre ID.
 def test_nonexistent_centre_returns_404(client: TestClient) -> None:
     headers = auth_headers(client)
 
@@ -115,6 +119,7 @@ def test_nonexistent_centre_returns_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+# Covers authenticated diagnostic-test creation and listing.
 def test_authenticated_test_creation_and_listing(client: TestClient) -> None:
     headers = auth_headers(client)
 
@@ -131,6 +136,7 @@ def test_authenticated_test_creation_and_listing(client: TestClient) -> None:
     assert len(list_response.json()) == 1
 
 
+# Covers creating centre-specific pricing and retrieving available tests.
 def test_create_and_retrieve_centre_tests(client: TestClient) -> None:
     headers = auth_headers(client)
     centre = create_centre(client, headers)
@@ -152,6 +158,7 @@ def test_create_and_retrieve_centre_tests(client: TestClient) -> None:
     assert Decimal(str(list_response.json()[0]["price"])) == Decimal("25.50")
 
 
+# Covers rejecting a pricing association for an unknown centre.
 def test_nonexistent_centre_for_centre_test_returns_404(client: TestClient) -> None:
     headers = auth_headers(client)
     diagnostic_test = create_test(client, headers)
@@ -165,6 +172,7 @@ def test_nonexistent_centre_for_centre_test_returns_404(client: TestClient) -> N
     assert response.status_code == 404
 
 
+# Covers rejecting a pricing association for an unknown diagnostic test.
 def test_nonexistent_test_for_centre_test_returns_404(client: TestClient) -> None:
     headers = auth_headers(client)
     centre = create_centre(client, headers)
@@ -178,6 +186,7 @@ def test_nonexistent_test_for_centre_test_returns_404(client: TestClient) -> Non
     assert response.status_code == 404
 
 
+# Covers returning 404 when listing tests for an unknown centre.
 def test_nonexistent_centre_when_retrieving_tests_returns_404(client: TestClient) -> None:
     headers = auth_headers(client)
 
@@ -186,6 +195,7 @@ def test_nonexistent_centre_when_retrieving_tests_returns_404(client: TestClient
     assert response.status_code == 404
 
 
+# Covers enforcing uniqueness for each centre-test pricing association.
 def test_duplicate_centre_test_returns_409(client: TestClient) -> None:
     headers = auth_headers(client)
     centre = create_centre(client, headers)
@@ -199,6 +209,7 @@ def test_duplicate_centre_test_returns_409(client: TestClient) -> None:
     assert duplicate_response.status_code == 409
 
 
+# Covers rejecting zero or negative centre-test pricing.
 def test_non_positive_price_returns_422(client: TestClient) -> None:
     headers = auth_headers(client)
     centre = create_centre(client, headers)
@@ -213,6 +224,7 @@ def test_non_positive_price_returns_422(client: TestClient) -> None:
     assert response.status_code == 422
 
 
+# Covers requiring authentication to create a centre-test association.
 def test_unauthenticated_centre_test_creation_returns_401(client: TestClient) -> None:
     response = client.post(
         "/api/v1/centre-tests",

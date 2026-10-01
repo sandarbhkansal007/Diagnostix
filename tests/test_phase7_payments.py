@@ -102,6 +102,7 @@ def pay(client: TestClient, headers: dict[str, str], booking_id: int, outcome: s
     return client.post("/api/v1/payments", json=payload, headers=headers)
 
 
+# Covers an authenticated user's payment request for their own booking.
 def test_authenticated_payment_for_own_booking_succeeds(client: TestClient) -> None:
     headers = auth_headers(client, "payment-owner@example.com")
     booking_id = create_booking(client, headers)
@@ -113,6 +114,7 @@ def test_authenticated_payment_for_own_booking_succeeds(client: TestClient) -> N
     assert response.json()["status"] == PaymentStatus.SUCCESS.value
 
 
+# Covers requiring authentication to create a payment.
 def test_unauthenticated_payment_returns_401(client: TestClient) -> None:
     response = client.post(
         "/api/v1/payments",
@@ -122,6 +124,7 @@ def test_unauthenticated_payment_returns_401(client: TestClient) -> None:
     assert response.status_code == 401
 
 
+# Covers returning 404 when the requested booking does not exist.
 def test_payment_for_nonexistent_booking_returns_404(client: TestClient) -> None:
     headers = auth_headers(client, "missing-payment-booking@example.com")
 
@@ -130,6 +133,7 @@ def test_payment_for_nonexistent_booking_returns_404(client: TestClient) -> None
     assert response.status_code == 404
 
 
+# Covers hiding another user's booking from payment requests.
 def test_user_cannot_pay_for_another_users_booking(client: TestClient) -> None:
     owner_headers = auth_headers(client, "payment-owner-two@example.com")
     other_headers = auth_headers(client, "payment-other@example.com")
@@ -140,6 +144,7 @@ def test_user_cannot_pay_for_another_users_booking(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+# Covers successful simulated payment, provider ID creation, and confirmation.
 def test_successful_payment_confirms_booking_and_stores_provider_id(client: TestClient) -> None:
     headers = auth_headers(client, "success-payment@example.com")
     booking_id = create_booking(client, headers)
@@ -152,6 +157,7 @@ def test_successful_payment_confirms_booking_and_stores_provider_id(client: Test
     assert booking_response.json()["status"] == BookingStatus.CONFIRMED.value
 
 
+# Covers failed simulated payment and the resulting booking state.
 def test_failed_payment_marks_booking_failed(client: TestClient) -> None:
     headers = auth_headers(client, "failed-payment@example.com")
     booking_id = create_booking(client, headers)
@@ -164,6 +170,7 @@ def test_failed_payment_marks_booking_failed(client: TestClient) -> None:
     assert booking_response.json()["status"] == BookingStatus.FAILED.value
 
 
+# Covers using the booking's saved amount instead of current catalogue pricing.
 def test_payment_amount_comes_from_booking_snapshot(client: TestClient, test_db) -> None:
     headers = auth_headers(client, "payment-amount@example.com")
     booking_id = create_booking(client, headers, price="500.00")
@@ -180,6 +187,7 @@ def test_payment_amount_comes_from_booking_snapshot(client: TestClient, test_db)
     assert Decimal(str(response.json()["amount"])) == Decimal("500.00")
 
 
+# Covers rejecting client-supplied payment amounts.
 def test_client_cannot_override_payment_amount(client: TestClient) -> None:
     headers = auth_headers(client, "payment-override@example.com")
     booking_id = create_booking(client, headers, price="500.00")
@@ -189,6 +197,7 @@ def test_client_cannot_override_payment_amount(client: TestClient) -> None:
     assert response.status_code == 422
 
 
+# Covers rejecting payment for a cancelled booking.
 def test_cancelled_booking_cannot_be_paid(client: TestClient) -> None:
     headers = auth_headers(client, "cancelled-payment@example.com")
     booking_id = create_booking(client, headers)
@@ -200,6 +209,7 @@ def test_cancelled_booking_cannot_be_paid(client: TestClient) -> None:
     assert response.status_code == 409
 
 
+# Covers rejecting payment when the booking is already confirmed.
 def test_confirmed_booking_without_payment_cannot_be_paid(test_db, client: TestClient) -> None:
     headers = auth_headers(client, "confirmed-payment@example.com")
     booking_id = create_booking(client, headers)
@@ -214,6 +224,7 @@ def test_confirmed_booking_without_payment_cannot_be_paid(test_db, client: TestC
     assert response.status_code == 409
 
 
+# Covers rejecting payment when the booking is already failed.
 def test_failed_booking_without_payment_cannot_be_paid(test_db, client: TestClient) -> None:
     headers = auth_headers(client, "failed-state-payment@example.com")
     booking_id = create_booking(client, headers)
@@ -228,6 +239,7 @@ def test_failed_booking_without_payment_cannot_be_paid(test_db, client: TestClie
     assert response.status_code == 409
 
 
+# Covers idempotent repeated payment requests and the one-payment-per-booking rule.
 def test_repeated_payment_is_idempotent_and_does_not_duplicate(test_db, client: TestClient) -> None:
     headers = auth_headers(client, "repeat-payment@example.com")
     booking_id = create_booking(client, headers)
@@ -244,6 +256,7 @@ def test_repeated_payment_is_idempotent_and_does_not_duplicate(test_db, client: 
     assert len(payments) == 1
 
 
+# Covers consistent persistence of payment and booking state and amount.
 def test_payment_and_booking_are_persisted_consistently(test_db, client: TestClient) -> None:
     headers = auth_headers(client, "consistent-payment@example.com")
     booking_id = create_booking(client, headers)

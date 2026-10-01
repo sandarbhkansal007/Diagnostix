@@ -133,6 +133,7 @@ def webhook_payload(
     return payload
 
 
+# Covers successful webhook processing and booking confirmation.
 def test_success_webhook_updates_payment_and_booking(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client)
 
@@ -147,6 +148,7 @@ def test_success_webhook_updates_payment_and_booking(client: TestClient, test_db
     assert response.json()["booking_status"] == BookingStatus.CONFIRMED.value
 
 
+# Covers failed webhook processing and booking failure state.
 def test_failure_webhook_updates_payment_and_booking(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "failure@example.com")
 
@@ -160,6 +162,7 @@ def test_failure_webhook_updates_payment_and_booking(client: TestClient, test_db
     assert response.json()["booking_status"] == BookingStatus.FAILED.value
 
 
+# Covers accepting external webhook callbacks without a user Bearer token.
 def test_webhook_does_not_require_user_authentication(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "no-auth@example.com")
 
@@ -171,6 +174,7 @@ def test_webhook_does_not_require_user_authentication(client: TestClient, test_d
     assert response.status_code == 200
 
 
+# Covers rejecting unknown payments without recording a webhook event.
 def test_nonexistent_payment_returns_404_and_records_no_event(client: TestClient, test_db) -> None:
     response = client.post(
         "/api/v1/payments/webhook",
@@ -184,6 +188,7 @@ def test_nonexistent_payment_returns_404_and_records_no_event(client: TestClient
     assert event_count == 0
 
 
+# Covers rejecting a provider payment ID paired with the wrong booking ID.
 def test_booking_payment_relationship_mismatch_returns_404(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "relationship@example.com")
 
@@ -195,6 +200,7 @@ def test_booking_payment_relationship_mismatch_returns_404(client: TestClient, t
     assert response.status_code == 404
 
 
+# Covers schema validation for unsupported events and incomplete payloads.
 def test_invalid_event_type_and_payload_return_422(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "validation@example.com")
     invalid_event = webhook_payload(booking_id, provider_payment_id)
@@ -208,6 +214,7 @@ def test_invalid_event_type_and_payload_return_422(client: TestClient, test_db) 
     assert invalid_payload_response.status_code == 422
 
 
+# Covers rejecting amount mismatches without changing payment or booking state.
 def test_amount_mismatch_returns_409_and_does_not_process_event(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "amount-mismatch@example.com")
 
@@ -227,6 +234,7 @@ def test_amount_mismatch_returns_409_and_does_not_process_event(client: TestClie
     assert booking.status is BookingStatus.PENDING
 
 
+# Covers duplicate delivery creating one event and one payment only.
 def test_duplicate_event_is_idempotent_and_creates_one_event(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "duplicate-event@example.com")
     payload = webhook_payload(booking_id, provider_payment_id)
@@ -247,6 +255,7 @@ def test_duplicate_event_is_idempotent_and_creates_one_event(client: TestClient,
     assert booking.status is BookingStatus.CONFIRMED
 
 
+# Covers duplicate delivery preserving the stored payment ID and amounts.
 def test_duplicate_event_preserves_payment_id_and_booking_amount(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "duplicate-payment@example.com")
     payload = webhook_payload(booking_id, provider_payment_id)
@@ -269,6 +278,7 @@ def test_duplicate_event_preserves_payment_id_and_booking_amount(client: TestCli
     assert booking.amount == Decimal("500.00")
 
 
+# Covers a matching webhook after the direct payment endpoint completes payment.
 def test_direct_payment_then_matching_success_webhook_is_safe(client: TestClient) -> None:
     headers = auth_headers(client, "direct-payment-webhook@example.com")
     booking_id = create_booking(client, headers)
@@ -290,6 +300,7 @@ def test_direct_payment_then_matching_success_webhook_is_safe(client: TestClient
     assert webhook_response.json()["booking_status"] == BookingStatus.CONFIRMED.value
 
 
+# Covers rejecting a contradictory webhook without corrupting completed state.
 def test_invalid_contradictory_state_returns_409(client: TestClient, test_db) -> None:
     headers = auth_headers(client, "contradictory-state@example.com")
     booking_id = create_booking(client, headers)
@@ -314,6 +325,7 @@ def test_invalid_contradictory_state_returns_409(client: TestClient, test_db) ->
     assert booking.status is BookingStatus.CONFIRMED
 
 
+# Covers preventing a webhook from confirming a cancelled booking.
 def test_cancelled_booking_cannot_be_confirmed_by_webhook(client: TestClient, test_db) -> None:
     headers = auth_headers(client, "cancelled-webhook@example.com")
     booking_id = create_booking(client, headers)
@@ -339,6 +351,7 @@ def test_cancelled_booking_cannot_be_confirmed_by_webhook(client: TestClient, te
     assert response.status_code == 409
 
 
+# Covers distinct event identities for one payment without duplicating payment rows.
 def test_two_event_ids_for_same_completed_payment_are_safe(client: TestClient, test_db) -> None:
     booking_id, provider_payment_id = create_pending_payment(test_db, client, "two-events@example.com")
     first_payload = webhook_payload(booking_id, provider_payment_id, "evt_first")
