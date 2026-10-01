@@ -3,9 +3,9 @@ version: "3.9"
 services:
   db:
     image: postgres:16-alpine
-    container_name: eve-health-postgres
+    container_name: diagnostix-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-eve_health}
+      POSTGRES_DB: ${POSTGRES_DB:-diagnostix}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
@@ -13,25 +13,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-eve_health}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-diagnostix}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   app:
     build: .
-    container_name: eve-health-api
+    container_name: diagnostix-api
     depends_on:
       db:
         condition: service_healthy
     environment:
       APP_ENV: ${APP_ENV:-development}
-      POSTGRES_DB: ${POSTGRES_DB:-eve_health}
+      POSTGRES_DB: ${POSTGRES_DB:-diagnostix}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/eve_health
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/diagnostix
       PYTHONPATH: /app
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}

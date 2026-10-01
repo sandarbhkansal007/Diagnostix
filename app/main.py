@@ -11,9 +11,9 @@ from app.api.routes.payment_webhooks import router as payment_webhooks_router
 from app.core.config import settings
 
 app = FastAPI(
-    title="EVE Healthcare Backend",
+    title="Diagnostix API",
     version="0.1.0",
-    description="EVE Healthcare SDE Intern Backend Engineering Assignment",
+    description="Diagnostix diagnostic-centre discovery, bookings, payments, and webhook API",
     docs_url="/docs",
     redoc_url="/redoc",
 )

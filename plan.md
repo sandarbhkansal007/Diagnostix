@@ -1,4 +1,4 @@
-## Plan: EVE Healthcare backend assignment
+## Plan: Diagnostix backend
 
 ### Phase 1 findings
 

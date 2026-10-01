@@ -1,6 +1,6 @@
-# EVE Healthcare Backend
+# Diagnostix
 
-A small FastAPI backend for diagnostic-centre discovery, test pricing, appointment bookings, simulated payments, and payment-provider webhook handling. It is designed for the EVE Healthcare SDE Intern Backend Engineering Assignment.
+A FastAPI backend for diagnostic-centre discovery, test pricing, appointment bookings, simulated payments, and payment-provider webhook handling.
 
 ## Tech Stack
 
@@ -63,8 +63,8 @@ Locally, the API is available at `http://localhost:8000`, Swagger UI at `http://
 
 | Variable | Purpose | Example |
 | --- | --- | --- |
-| `DATABASE_URL` | SQLAlchemy database URL | `postgresql+psycopg2://postgres:postgres@localhost:5432/eve_health` |
-| `POSTGRES_DB` | PostgreSQL database name | `eve_health` |
+| `DATABASE_URL` | SQLAlchemy database URL | `postgresql+psycopg2://postgres:postgres@localhost:5432/diagnostix` |
+| `POSTGRES_DB` | PostgreSQL database name | `diagnostix` |
 | `POSTGRES_USER` | PostgreSQL user | `postgres` |
 | `POSTGRES_PASSWORD` | PostgreSQL password | `change-me-locally` |
 | `POSTGRES_HOST` | PostgreSQL host | `localhost` |
