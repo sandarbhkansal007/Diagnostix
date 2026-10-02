@@ -8,6 +8,7 @@ from app.api.routes.diagnostic_tests import router as diagnostic_tests_router
 from app.api.routes.health import router as health_router
 from app.api.routes.payments import router as payments_router
 from app.api.routes.payment_webhooks import router as payment_webhooks_router
+from app.api.routes.reports import router as reports_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -26,6 +27,7 @@ app.include_router(diagnostic_tests_router)
 app.include_router(centre_tests_router)
 app.include_router(payments_router)
 app.include_router(payment_webhooks_router)
+app.include_router(reports_router)
 
 
 @app.get("/")

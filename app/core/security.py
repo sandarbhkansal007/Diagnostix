@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -18,18 +19,28 @@ def verify_password(password: str, password_hash_value: str) -> bool:
     return password_hash.verify(password, password_hash_value)
 
 
-def create_access_token(subject: str, expires_delta: timedelta | None = None) -> str:
+def create_access_token(
+    subject: str,
+    expires_delta: timedelta | None = None,
+    token_version: int = 0,
+) -> str:
     if not settings.jwt_secret_key:
         raise RuntimeError("JWT_SECRET_KEY is not configured")
 
     expires_at = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
-    payload = {"sub": subject, "exp": expires_at}
+    payload = {
+        "sub": subject,
+        "exp": expires_at,
+        "iat": datetime.now(timezone.utc),
+        "jti": uuid4().hex,
+        "token_version": token_version,
+    }
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
-def decode_access_token(token: str) -> str | None:
+def decode_access_token(token: str) -> dict | None:
     if not settings.jwt_secret_key:
         return None
 
@@ -42,5 +53,10 @@ def decode_access_token(token: str) -> str | None:
     except InvalidTokenError:
         return None
 
+    if not isinstance(payload, dict):
+        return None
+
     subject = payload.get("sub")
-    return subject if isinstance(subject, str) and subject else None
+    if not isinstance(subject, str) or not subject:
+        return None
+    return payload
