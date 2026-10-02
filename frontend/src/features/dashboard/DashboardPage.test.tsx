@@ -29,7 +29,7 @@ const authValue: AuthContextValue = {
   isLoading: false,
   login: async () => undefined,
   signup: async () => undefined,
-  logout: () => undefined,
+  logout: async () => undefined,
 };
 
 const bookings: Booking[] = [

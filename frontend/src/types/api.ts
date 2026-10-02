@@ -4,4 +4,4 @@ export interface ApiValidationIssue {
   readonly type: string;
 }
 
-export type ApiErrorDetail = string | readonly ApiValidationIssue[];
+export type ApiErrorDetail = string | readonly ApiValidationIssue[] | Record<string, unknown>;

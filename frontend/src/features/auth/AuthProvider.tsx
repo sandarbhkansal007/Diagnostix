@@ -1,8 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ApiError } from "../../lib/apiError";
 import { clearAccessToken, getAccessToken } from "../../lib/authToken";
 import { AuthContext } from "./authContext";
-import { getCurrentUser, login as loginUser, signup as signupUser } from "./authService";
+import { getCurrentUser, login as loginUser, logoutSession, signup as signupUser } from "./authService";
 import type { AuthCredentials, AuthUser } from "./types";
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
@@ -52,10 +52,20 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     setUser(response.user);
   }
 
-  function logout(): void {
-    clearAccessToken();
-    setUser(null);
-  }
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      if (getAccessToken()) {
+        await logoutSession();
+      }
+    } catch (error) {
+      if (!(error instanceof ApiError && error.status === 401)) {
+        console.warn("Logout request failed; clearing local session anyway.", error);
+      }
+    } finally {
+      clearAccessToken();
+      setUser(null);
+    }
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>

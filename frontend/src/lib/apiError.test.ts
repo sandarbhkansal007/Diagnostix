@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError } from "./apiError";
+import { ApiError, formatApiErrorMessage } from "./apiError";
 
 describe("ApiError", () => {
   it("uses FastAPI string details as its message", () => {
@@ -25,10 +25,29 @@ describe("ApiError", () => {
     expect(error.detail).toBeUndefined();
   });
 
+  it("handles structured FastAPI error objects and validation arrays", () => {
+    const wrongPassword = new ApiError(401, { detail: { msg: "Current password is incorrect" } });
+    const validation = new ApiError(422, {
+      detail: [{ loc: ["body", "new_password"], msg: "String should have at least 8 characters", type: "string_too_short" }],
+    });
+
+    expect(wrongPassword.message).toBe("Current password is incorrect");
+    expect(formatApiErrorMessage(validation, "Invalid password")).toBe(
+      "String should have at least 8 characters",
+    );
+  });
+
   it("provides a status-based fallback for unknown error bodies", () => {
     const error = new ApiError(503, { message: "Unavailable" });
 
     expect(error.message).toBe("Request failed with status 503");
     expect(error.detail).toBeUndefined();
+  });
+
+  it("formats generic Error and unknown values without exposing object dumps", () => {
+    expect(formatApiErrorMessage(new Error("Network failure"), "Fallback")).toBe("Network failure");
+    expect(formatApiErrorMessage({ detail: { msg: "Oops" } }, "Fallback")).toBe("Oops");
+    expect(formatApiErrorMessage(undefined, "Fallback")).toBe("Fallback");
+    expect(formatApiErrorMessage({ foo: "bar" }, "Fallback")).toBe("Fallback");
   });
 });

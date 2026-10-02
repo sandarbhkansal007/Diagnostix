@@ -1,6 +1,15 @@
-import { setAccessToken } from "../../lib/authToken";
+import { clearAccessToken, setAccessToken } from "../../lib/authToken";
 import { apiRequest } from "../../services/apiClient";
 import type { AuthCredentials, AuthResponse, AuthUser } from "./types";
+
+export interface ProfileUpdatePayload {
+  readonly email?: string;
+}
+
+export interface PasswordChangePayload {
+  readonly current_password: string;
+  readonly new_password: string;
+}
 
 async function authenticate(
   endpoint: "login" | "signup",
@@ -26,4 +35,32 @@ export function signup(credentials: AuthCredentials): Promise<AuthResponse> {
 
 export function getCurrentUser(): Promise<AuthUser> {
   return apiRequest<AuthUser>("auth/me");
+}
+
+export function getProfile(): Promise<AuthUser> {
+  return apiRequest<AuthUser>("auth/profile");
+}
+
+export function updateProfile(payload: ProfileUpdatePayload): Promise<AuthUser> {
+  return apiRequest<AuthUser, ProfileUpdatePayload>("auth/profile", {
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export function changePassword(payload: PasswordChangePayload): Promise<{ message: string }> {
+  return apiRequest<{ message: string }, PasswordChangePayload>("auth/change-password", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function logoutSession(): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>("auth/logout", {
+    method: "POST",
+  });
+}
+
+export function clearSession(): void {
+  clearAccessToken();
 }

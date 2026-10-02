@@ -17,7 +17,7 @@ const authValue = {
   isLoading: false,
   login: async () => undefined,
   signup: async () => undefined,
-  logout: () => undefined,
+  logout: async () => undefined,
 };
 
 beforeEach(() => {

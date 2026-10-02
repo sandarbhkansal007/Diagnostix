@@ -6,7 +6,7 @@ export interface AuthContextValue {
   readonly isLoading: boolean;
   readonly login: (credentials: AuthCredentials) => Promise<void>;
   readonly signup: (credentials: AuthCredentials) => Promise<void>;
-  readonly logout: () => void;
+  readonly logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
