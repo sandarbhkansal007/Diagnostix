@@ -1,0 +1,15 @@
+export const APP_ROUTES = {
+  login: "/login",
+  signup: "/signup",
+  app: "/app",
+  dashboard: "/app/dashboard",
+  tests: "/app/tests",
+  centres: "/app/centres",
+  centreDetail: "/app/centres/:centreId",
+  bookings: "/app/bookings",
+  bookingDetail: "/app/bookings/:bookingId",
+  bookingCreate: "/app/bookings/new",
+  payment: "/app/bookings/:bookingId/payment",
+  reports: "/app/reports",
+  settings: "/app/settings",
+} as const;
